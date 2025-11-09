@@ -12,6 +12,7 @@ import matplotlib.font_manager as fm
 import warnings
 from tqdm import tqdm
 import joblib
+import xgboost as xgb
 warnings.filterwarnings('ignore')
 
 # 设置中文字体
@@ -71,7 +72,7 @@ plt.tight_layout()
 plt.savefig('pca_visualization.png')
 
 # 特征选择：使用随机森林特征重要性
-rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
 rf.fit(X_processed, y_encoded)
 
 # 获取特征重要性
@@ -98,25 +99,37 @@ X_selected = X_processed[top_features]
 # 划分训练和测试集
 X_train, X_test, y_train, y_test = train_test_split(X_selected, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded)
 
-# 训练梯度提升模型
-param_grid = {
-    'n_estimators': [100, 200],
-    'max_depth': [3, 5],
-    'learning_rate': [0.1, 0.2]
-}
+# 使用XGBoost模型（直接使用优化参数，跳过网格搜索以加快速度）
+print("使用XGBoost模型进行训练...")
 
-print("开始网格搜索超参数...")
-model = GridSearchCV(GradientBoostingClassifier(random_state=42), param_grid, cv=3, scoring='accuracy', verbose=2)
-model.fit(X_train, y_train)
+# 使用优化后的参数（基于经验值）
+xgb_model = xgb.XGBClassifier(
+    objective='multi:softmax',
+    num_class=len(le.classes_),
+    random_state=42,
+    tree_method='hist',
+    device='cuda',
+    n_estimators=200,
+    max_depth=6,
+    learning_rate=0.1,
+    subsample=0.8,
+    verbosity=1
+)
 
-print(f"最佳参数: {model.best_params_}")
+# 直接训练模型
+xgb_model.fit(X_train, y_train)
+
+print(f"最佳参数: 使用预设优化参数")
+model = xgb_model  # 为了保持后续代码兼容性
+
+print(f"最佳参数: 使用预设优化参数 (n_estimators=200, max_depth=6, learning_rate=0.1, subsample=0.8)")
 
 # 预测
 y_pred = model.predict(X_test)
 
 # 评估
 accuracy = accuracy_score(y_test, y_pred)
-print(f"\n梯度提升模型准确率: {accuracy:.4f}")
+print(f"\nXGBoost模型准确率: {accuracy:.4f}")
 print("\n分类报告:")
 print(classification_report(y_test, y_pred, target_names=le.classes_))
 
@@ -131,8 +144,8 @@ plt.tight_layout()
 plt.savefig('confusion_matrix.png')
 
 # 保存模型
-joblib.dump(model.best_estimator_, 'ai_impact_gb_model.pkl')
-print("\n梯度提升模型已保存为 ai_impact_gb_model.pkl")
+joblib.dump(model, 'ai_impact_xgb_model.pkl')
+print("\nXGBoost模型已保存为 ai_impact_xgb_model.pkl")
 
 # 额外分析：按行业分析AI影响
 industry_impact = df.groupby('Industry')['AI Impact Level'].value_counts(normalize=True).unstack()
