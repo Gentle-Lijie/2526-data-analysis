@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+*.swp
+*.swo
+.idea/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dylib
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python packages
+pip-wheel-metadata/
+
+# Test / coverage
+.coverage
+.pytest_cache/
+
+# Data & models (generated)
+# Keep source data if you want, but ignore generated model artifacts and figures
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.ckpt
+*.png
+training_history.png
+
+# Excel exported files (ignore generated)
+*.xlsx
+
+# local environment files
+.env
+
+# Misc
+*.bak
+*~
+
+# Optional: ignore large CSV datasets (uncomment if you don't want to keep CSV in repo)
+# *.csv
